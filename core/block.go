@@ -4,11 +4,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 )
 
 type Block struct {
+	Index        int            `json:"index"`
 	Timestamp    int64          `json:"timestamp"`
 	Transactions []*Transaction `json:"transactions"`
 	Nonce        int            `json:"nonce"`
@@ -16,8 +18,9 @@ type Block struct {
 	PrevHash     string         `json:"prev-hash"`
 }
 
-func NewBlock(prevHash string, transactions []*Transaction) (*Block, error) {
+func NewBlock(index int, prevHash string, transactions []*Transaction) (*Block, error) {
 	block := &Block{
+		Index:        index,
 		Timestamp:    time.Now().Unix(),
 		Transactions: transactions,
 		PrevHash:     prevHash,
@@ -33,7 +36,7 @@ func NewBlock(prevHash string, transactions []*Transaction) (*Block, error) {
 }
 
 func (block *Block) CalculateHash() (string, error) {
-	value := fmt.Sprintf("%d-%s-%s-%d", block.Timestamp, block.PrevHash, block.joinTransactionsSignatures(), block.Nonce)
+	value := fmt.Sprintf("%d-%d-%s-%s-%d", block.Index, block.Timestamp, block.PrevHash, block.joinTransactionsSignatures(), block.Nonce)
 	hash := sha256.Sum256([]byte(value))
 	return hex.EncodeToString(hash[:]), nil
 }
@@ -52,14 +55,12 @@ func (block *Block) MineBlock(difficulty int) {
 }
 
 func (block *Block) joinTransactionsSignatures() string {
-	var joinedTransactionsSignatures string
-	for idx, t := range block.Transactions {
-		if idx > 0 {
-			joinedTransactionsSignatures += ","
-		}
-		joinedTransactionsSignatures += t.Signature
+	var joinedTransactionsSignatures []string
+	for _, t := range block.Transactions {
+		joinedTransactionsSignatures = append(joinedTransactionsSignatures, t.Signature)
 	}
-	return joinedTransactionsSignatures
+	sort.Strings(joinedTransactionsSignatures)
+	return strings.Join(joinedTransactionsSignatures, "")
 }
 
 func (block *Block) IsValid() bool {
