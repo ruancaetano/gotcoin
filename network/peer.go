@@ -1,4 +1,4 @@
-package infra
+package network
 
 import (
 	"bufio"
@@ -20,8 +20,16 @@ import (
 	"github.com/ruancaetano/gotcoin/core"
 )
 
-func InitNode(listenPort int) (host.Host, error) {
-	priv, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
+func InitNode(genesis bool, listenPort int) (host.Host, error) {
+	var priv crypto.PrivKey
+	var err error
+
+	if genesis {
+		listenPort = GenesisPort
+		priv, err = GetGenesisIdentity()
+	} else {
+		priv, _, err = crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
+	}
 	if err != nil {
 		return nil, err
 	}
