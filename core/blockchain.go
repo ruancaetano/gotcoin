@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"sort"
 )
 
 type BlockChain struct {
@@ -17,13 +18,27 @@ func NewBlockChain() *BlockChain {
 	return bc
 }
 
+func NewEmptyBlockChain() *BlockChain {
+	bc := &BlockChain{}
+	bc.calculator = NewBlockChainCalculator(bc)
+	return bc
+}
+
 func (bc *BlockChain) CreateGenesisBlock() *Block {
-	block, _ := NewBlock("", []*Transaction{})
+	block, _ := NewBlock(0, "", []*Transaction{})
 	return block
 }
 
 func (bc *BlockChain) GetLastBlock() *Block {
 	return bc.Blocks[len(bc.Blocks)-1]
+}
+
+func (bc *BlockChain) AddBlock(block *Block) {
+	if !block.IsValid() {
+		return
+	}
+
+	bc.Blocks = append(bc.Blocks, block)
 }
 
 func (bc *BlockChain) AddTransaction(transaction *Transaction) error {
@@ -43,7 +58,8 @@ func (bc *BlockChain) MinePendingTransactions(mineRewardAddress string) {
 	if len(bc.pendingTransactions) == 0 {
 		return
 	}
-	block, _ := NewBlock(bc.GetLastBlock().Hash, bc.pendingTransactions)
+	lastBlock := bc.GetLastBlock()
+	block, _ := NewBlock(lastBlock.Index+1, lastBlock.Hash, bc.pendingTransactions)
 	block.MineBlock(MineDifficulty)
 	fmt.Println("Block mined: ", block.Hash)
 	bc.Blocks = append(bc.Blocks, block)
@@ -65,4 +81,12 @@ func (bc *BlockChain) IsChainValid() bool {
 	}
 
 	return true
+}
+
+func (bc *BlockChain) SortBlocks() {
+	// TODO: explore insertion sort
+	less := func(i, j int) bool {
+		return bc.Blocks[i].Index < bc.Blocks[j].Index
+	}
+	sort.Slice(bc.Blocks, less)
 }
