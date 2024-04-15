@@ -77,3 +77,12 @@ func (block *Block) IsValid() bool {
 
 	return true
 }
+
+func (block *Block) HasTransaction(transaction *Transaction) bool {
+	for _, t := range block.Transactions {
+		if t.Signature == transaction.Signature {
+			return true
+		}
+	}
+	return false
+}
