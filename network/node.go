@@ -12,9 +12,10 @@ import (
 	"github.com/multiformats/go-multiaddr"
 
 	"github.com/ruancaetano/gotcoin/core"
+	"github.com/ruancaetano/gotcoin/core/blockchain"
 )
 
-func SetupGenesisNode(ctx context.Context, node host.Host, bc *core.BlockChain, eh *core.EventHandler) {
+func SetupGenesisNode(ctx context.Context, node host.Host, bc *blockchain.BlockChain, eh *core.EventHandler) {
 	_, err := NewKDHT(ctx, node, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -26,7 +27,7 @@ func SetupGenesisNode(ctx context.Context, node host.Host, bc *core.BlockChain, 
 	log.Println("listening for connections")
 }
 
-func SetupPeerNode(ctx context.Context, node host.Host, _ *core.BlockChain, eh *core.EventHandler) (*network.Stream, *bufio.ReadWriter) {
+func SetupPeerNode(ctx context.Context, node host.Host, _ *blockchain.BlockChain, eh *core.EventHandler) (*network.Stream, *bufio.ReadWriter) {
 	node.SetStreamHandler("/p2p/1.0.0", func(s network.Stream) { HandleNewStream(s, eh) })
 
 	addr, err := multiaddr.NewMultiaddr(GenesisNodeAddr)

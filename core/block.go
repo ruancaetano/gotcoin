@@ -1,10 +1,6 @@
 package core
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-	"sort"
 	"strings"
 	"time"
 )
@@ -36,9 +32,12 @@ func NewBlock(index int, prevHash string, transactions []*Transaction) (*Block, 
 }
 
 func (block *Block) CalculateHash() (string, error) {
-	value := fmt.Sprintf("%d-%d-%s-%s-%d", block.Index, block.Timestamp, block.PrevHash, block.joinTransactionsSignatures(), block.Nonce)
-	hash := sha256.Sum256([]byte(value))
-	return hex.EncodeToString(hash[:]), nil
+	return CalculateBlockHash(
+		block.Index,
+		block.Timestamp,
+		block.PrevHash,
+		JoinBlockTransactionsSignatures(block),
+		block.Nonce), nil
 }
 
 func (block *Block) MineBlock(difficulty int) {
@@ -52,15 +51,6 @@ func (block *Block) MineBlock(difficulty int) {
 		}
 		block.Nonce += 1
 	}
-}
-
-func (block *Block) joinTransactionsSignatures() string {
-	var joinedTransactionsSignatures []string
-	for _, t := range block.Transactions {
-		joinedTransactionsSignatures = append(joinedTransactionsSignatures, t.Signature)
-	}
-	sort.Strings(joinedTransactionsSignatures)
-	return strings.Join(joinedTransactionsSignatures, "")
 }
 
 func (block *Block) IsValid() bool {

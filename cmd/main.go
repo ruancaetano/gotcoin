@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/ruancaetano/gotcoin/core"
+	"github.com/ruancaetano/gotcoin/core/blockchain"
 	"github.com/ruancaetano/gotcoin/infra"
 	"github.com/ruancaetano/gotcoin/network"
 )
@@ -25,11 +26,11 @@ func main() {
 	}
 
 	if *config.Genesis {
-		bc := core.NewBlockChain()
+		bc := blockchain.NewBlockChain()
 		eh := core.NewEventHandler(bc)
 		network.SetupGenesisNode(ctx, node, bc, eh)
 	} else {
-		bc := core.NewEmptyBlockChain()
+		bc := blockchain.NewEmptyBlockChain()
 		eh := core.NewEventHandler(bc)
 		network.SetupPeerNode(ctx, node, bc, eh)
 	}

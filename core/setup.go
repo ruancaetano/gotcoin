@@ -2,9 +2,11 @@ package core
 
 import (
 	"fmt"
+
+	"github.com/ruancaetano/gotcoin/core/blockchain"
 )
 
-func SetupInitialBlocks(bc *BlockChain) {
+func SetupInitialBlocks(bc *blockchain.BlockChain) {
 	t0 := NewTransaction("", Wallet1.PublicKey, 100)
 	t01 := NewTransaction("", Wallet2.PublicKey, 100)
 	t02 := NewTransaction("", Wallet3.PublicKey, 100)
@@ -30,9 +32,8 @@ func SetupInitialBlocks(bc *BlockChain) {
 	bc.AddTransaction(t3)
 	bc.MinePendingTransactions(Miner1.PublicKey)
 
-	c := NewBlockChainCalculator(bc)
-	fmt.Printf("Wallet 1: %.2f\n", c.GetBalance(Wallet1.PublicKey))
-	fmt.Printf("Wallet 2: %.2f\n", c.GetBalance(Wallet2.PublicKey))
-	fmt.Printf("Wallet 3: %.2f\n", c.GetBalance(Wallet3.PublicKey))
-	fmt.Printf("Wallet Miner: %.2f\n", c.GetBalance(Miner1.PublicKey))
+	fmt.Printf("Wallet 1: %.2f\n", bc.GetBalance(Wallet1.PublicKey))
+	fmt.Printf("Wallet 2: %.2f\n", bc.GetBalance(Wallet2.PublicKey))
+	fmt.Printf("Wallet 3: %.2f\n", bc.GetBalance(Wallet3.PublicKey))
+	fmt.Printf("Wallet Miner: %.2f\n", bc.GetBalance(Miner1.PublicKey))
 }
