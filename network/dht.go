@@ -58,12 +58,12 @@ func Discover(ctx context.Context, discoveryAddrChan chan string, node host.Host
 	var routingDiscovery = routing.NewRoutingDiscovery(dht)
 
 	withTtl := func(options *discovery.Options) error {
-		options.Ttl = time.Second * 10
+		options.Ttl = time.Second * 30
 		return nil
 	}
 	util.Advertise(ctx, routingDiscovery, rendezvous, withTtl)
 
-	ticker := time.NewTicker(time.Second * 5)
+	ticker := time.NewTicker(time.Second * 10)
 	defer ticker.Stop()
 
 	for {

@@ -11,7 +11,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	node, err := network.InitNode(false, 0)
+	node, err := network.InitHost(false, 0)
 	if err != nil {
 		panic(err)
 	}

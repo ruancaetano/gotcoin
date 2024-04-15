@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/ruancaetano/gotcoin/core"
@@ -20,21 +21,25 @@ func main() {
 
 	log.Println("Config: ", config)
 	ctx := context.Background()
-	node, err := network.InitNode(*config.Genesis, 0)
+	host, err := network.InitHost(*config.Genesis, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	var node *network.Node
 	if *config.Genesis {
 		bc := blockchain.NewBlockChain()
 		eh := core.NewEventHandler(bc)
-		network.SetupGenesisNode(ctx, node, bc, eh)
+
+		node = network.NewGenesisNode(ctx, host, bc, eh)
 	} else {
 		bc := blockchain.NewEmptyBlockChain()
 		eh := core.NewEventHandler(bc)
-		network.SetupPeerNode(ctx, node, bc, eh)
+		node = network.NewNode(ctx, host, bc, eh)
 	}
 
+	fmt.Println("Node ID: ", node.ID)
+	fmt.Println("Node Addr: ", node.Addr)
 	// hang forever
 	select {}
 }
