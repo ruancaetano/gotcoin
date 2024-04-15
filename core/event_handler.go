@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
+	"github.com/ruancaetano/gotcoin/core/blockchain"
 )
 
 type EventHandler struct {
-	BlockChain *BlockChain
+	BlockChain *blockchain.BlockChain
 }
 
-func NewEventHandler(bc *BlockChain) *EventHandler {
+func NewEventHandler(bc *blockchain.BlockChain) *EventHandler {
 	return &EventHandler{bc}
 }
 
@@ -22,6 +24,11 @@ func (eh *EventHandler) HandleEvent(rw *bufio.ReadWriter, event EventData) {
 		break
 	case ResponseBlockChainSyncEventType:
 		eh.handleBlockChainSyncResponse(event)
+		break
+	case NewTransactionEventType:
+		eh.handleNewTransaction(event)
+	case NewBlockEventType:
+		eh.handleNewBlock(event)
 	}
 }
 
@@ -66,4 +73,30 @@ func (eh *EventHandler) handleBlockChainSyncResponse(event EventData) {
 		log.Println("Block chain valid: ", eh.BlockChain.IsChainValid())
 		return
 	}
+}
+
+func (eh *EventHandler) handleNewTransaction(event EventData) {
+	if event.Transaction == nil {
+		return
+	}
+
+	if err := eh.BlockChain.AddTransaction(event.Transaction); err != nil {
+		log.Println("Skipping transaction: ", err.Error())
+	}
+}
+
+func (eh *EventHandler) handleNewBlock(event EventData) {
+	if event.Block == nil {
+		return
+	}
+
+	newBlock := event.Block
+	lastBlock := eh.BlockChain.GetLastBlock()
+
+	duplicatedBlock := newBlock.PrevHash == lastBlock.PrevHash
+	if !duplicatedBlock {
+		eh.BlockChain.InsertNewBlock(event.Block, *event.NewDifficult)
+		return
+	}
+
 }
