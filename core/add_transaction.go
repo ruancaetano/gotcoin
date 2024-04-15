@@ -1,12 +1,10 @@
-package blockchain
+package core
 
 import (
 	"fmt"
-
-	"github.com/ruancaetano/gotcoin/core"
 )
 
-func (bc *BlockChain) AddTransaction(transaction *core.Transaction) error {
+func (bc *BlockChain) AddTransaction(transaction *Transaction) error {
 	addressBalance := bc.GetBalance(transaction.FromAddr)
 	if !transaction.IsCoinbase() && addressBalance < transaction.Amount {
 		return fmt.Errorf("Not enough balance")

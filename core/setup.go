@@ -2,11 +2,9 @@ package core
 
 import (
 	"fmt"
-
-	"github.com/ruancaetano/gotcoin/core/blockchain"
 )
 
-func SetupInitialBlocks(bc *blockchain.BlockChain) {
+func SetupInitialBlocks(bc *BlockChain) {
 	t0 := NewTransaction("", Wallet1.PublicKey, 100)
 	t01 := NewTransaction("", Wallet2.PublicKey, 100)
 	t02 := NewTransaction("", Wallet3.PublicKey, 100)

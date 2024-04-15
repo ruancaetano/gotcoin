@@ -1,14 +1,13 @@
-package blockchain
+package core
 
 import (
 	"log"
 	"strings"
 
-	"github.com/ruancaetano/gotcoin/core"
 	"github.com/ruancaetano/gotcoin/util"
 )
 
-func (bc *BlockChain) InsertNewBlock(newBlock *core.Block, newDifficulty int) {
+func (bc *BlockChain) InsertNewBlock(newBlock *Block, newDifficulty int) {
 	lastBlock := bc.GetLastBlock()
 
 	duplicatedBlock := newBlock.PrevHash == lastBlock.PrevHash
@@ -45,14 +44,14 @@ func (bc *BlockChain) InsertNewBlock(newBlock *core.Block, newDifficulty int) {
 	bc.Difficulty = newDifficulty
 }
 
-func (bc *BlockChain) isNewValidBlock(newBlock *core.Block) bool {
+func (bc *BlockChain) isNewValidBlock(newBlock *Block) bool {
 	lastBlock := bc.GetLastBlock()
 
-	expectedNewBlockHash := core.CalculateBlockHash(
+	expectedNewBlockHash := CalculateBlockHash(
 		newBlock.Index,
 		newBlock.Timestamp,
 		lastBlock.PrevHash,
-		core.JoinBlockTransactionsSignatures(newBlock),
+		JoinBlockTransactionsSignatures(newBlock),
 		newBlock.Nonce)
 
 	difficultyMatch := strings.Repeat("0", bc.Difficulty)

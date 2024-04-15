@@ -1,4 +1,4 @@
-package blockchain
+package core
 
 func (bc *BlockChain) GetBalance(address string) float64 {
 	balance := 0.0

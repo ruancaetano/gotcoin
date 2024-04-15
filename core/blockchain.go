@@ -1,21 +1,19 @@
-package blockchain
+package core
 
 import (
 	"sort"
-
-	"github.com/ruancaetano/gotcoin/core"
 )
 
 type BlockChain struct {
-	Synced              bool                `json:"synced"`
-	PendingTransactions []*core.Transaction `json:"pendingTransactions"`
-	Blocks              []*core.Block       `json:"blocks"`
-	Difficulty          int                 `json:"difficulty"`
+	Synced              bool           `json:"synced"`
+	PendingTransactions []*Transaction `json:"pendingTransactions"`
+	Blocks              []*Block       `json:"blocks"`
+	Difficulty          int            `json:"difficulty"`
 }
 
 func NewBlockChain() *BlockChain {
 	bc := &BlockChain{
-		Difficulty: core.MineDifficulty,
+		Difficulty: MineDifficulty,
 	}
 	bc.Blocks = append(bc.Blocks, bc.CreateGenesisBlock())
 	return bc
@@ -26,7 +24,7 @@ func NewEmptyBlockChain() *BlockChain {
 	return bc
 }
 
-func (bc *BlockChain) GetLastBlock() *core.Block {
+func (bc *BlockChain) GetLastBlock() *Block {
 	return bc.Blocks[len(bc.Blocks)-1]
 }
 

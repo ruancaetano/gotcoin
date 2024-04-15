@@ -14,7 +14,6 @@ import (
 	"github.com/multiformats/go-multiaddr"
 
 	"github.com/ruancaetano/gotcoin/core"
-	"github.com/ruancaetano/gotcoin/core/blockchain"
 )
 
 type Node struct {
@@ -25,7 +24,7 @@ type Node struct {
 	Streams      map[peer.ID]network.Stream
 }
 
-func NewGenesisNode(ctx context.Context, host libhost.Host, bc *blockchain.BlockChain, eh *core.EventHandler) *Node {
+func NewGenesisNode(ctx context.Context, host libhost.Host, bc *core.BlockChain, eh *core.EventHandler) *Node {
 	core.SetupInitialBlocks(bc)
 
 	_, err := NewKDHT(ctx, host, nil)
@@ -45,7 +44,7 @@ func NewGenesisNode(ctx context.Context, host libhost.Host, bc *blockchain.Block
 	return node
 }
 
-func NewNode(ctx context.Context, host libhost.Host, _ *blockchain.BlockChain, eh *core.EventHandler) *Node {
+func NewNode(ctx context.Context, host libhost.Host, _ *core.BlockChain, eh *core.EventHandler) *Node {
 	genesisAddr, err := multiaddr.NewMultiaddr(GenesisNodeAddr)
 	if err != nil {
 		log.Fatal("failed to parse multiaddr:", err)

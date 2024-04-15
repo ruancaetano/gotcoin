@@ -1,9 +1,7 @@
-package blockchain
+package core
 
 import (
 	"fmt"
-
-	"github.com/ruancaetano/gotcoin/core"
 )
 
 func (bc *BlockChain) MinePendingTransactions(mineRewardAddress string) {
@@ -11,12 +9,12 @@ func (bc *BlockChain) MinePendingTransactions(mineRewardAddress string) {
 		return
 	}
 	lastBlock := bc.GetLastBlock()
-	block, _ := core.NewBlock(lastBlock.Index+1, lastBlock.Hash, bc.PendingTransactions)
+	block, _ := NewBlock(lastBlock.Index+1, lastBlock.Hash, bc.PendingTransactions)
 	block.MineBlock(bc.Difficulty)
 	fmt.Println("Block mined: ", block.Hash)
 	bc.Blocks = append(bc.Blocks, block)
 
-	bc.PendingTransactions = []*core.Transaction{
-		core.NewTransaction("", mineRewardAddress, core.MineReward),
+	bc.PendingTransactions = []*Transaction{
+		NewTransaction("", mineRewardAddress, MineReward),
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/ruancaetano/gotcoin/core"
-	"github.com/ruancaetano/gotcoin/core/blockchain"
 	"github.com/ruancaetano/gotcoin/network"
 )
 
@@ -16,10 +15,10 @@ func main() {
 		panic(err)
 	}
 
-	bc := blockchain.NewEmptyBlockChain()
+	bc := core.NewEmptyBlockChain()
 	eh := core.NewEventHandler(bc)
 
-	network.SetupPeerNode(ctx, node, bc, eh)
+	network.NewNode(ctx, node, bc, eh)
 	for !bc.Synced {
 	}
 	fmt.Println("Blockchain synced")

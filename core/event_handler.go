@@ -5,15 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-
-	"github.com/ruancaetano/gotcoin/core/blockchain"
 )
 
 type EventHandler struct {
-	BlockChain *blockchain.BlockChain
+	BlockChain *BlockChain
 }
 
-func NewEventHandler(bc *blockchain.BlockChain) *EventHandler {
+func NewEventHandler(bc *BlockChain) *EventHandler {
 	return &EventHandler{bc}
 }
 
