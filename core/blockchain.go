@@ -13,7 +13,7 @@ type BlockChain struct {
 
 func NewBlockChain() *BlockChain {
 	bc := &BlockChain{
-		Difficulty: MineDifficulty,
+		Difficulty: InitialMineDifficulty,
 	}
 	bc.Blocks = append(bc.Blocks, bc.CreateGenesisBlock())
 	return bc

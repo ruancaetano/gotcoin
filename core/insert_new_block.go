@@ -21,8 +21,8 @@ func (bc *BlockChain) InsertNewBlock(newBlock *Block, newDifficulty int) {
 	for _, transaction := range newBlock.Transactions {
 		found := false
 		for _, pendingTransaction := range bc.PendingTransactions {
-			if util.CompareTransactionFunc(pendingTransaction, transaction) {
-				newPendingTransactions = util.RemoveFromSlice(bc.PendingTransactions, pendingTransaction, util.CompareTransactionFunc)
+			if CompareTransactionFunc(pendingTransaction, transaction) {
+				newPendingTransactions = util.RemoveFromSlice(bc.PendingTransactions, pendingTransaction, CompareTransactionFunc)
 				found = true
 				break
 			}

@@ -22,3 +22,7 @@ func JoinBlockTransactionsSignatures(block *Block) string {
 	sort.Strings(joinedTransactionsSignatures)
 	return strings.Join(joinedTransactionsSignatures, "")
 }
+
+func CompareTransactionFunc(a, b *Transaction) bool {
+	return a.Hash == b.Hash
+}
