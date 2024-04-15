@@ -6,6 +6,7 @@ import (
 )
 
 type BlockChain struct {
+	Synced              bool
 	pendingTransactions []*Transaction
 	Blocks              []*Block `json:"blocks"`
 	calculator          *BlockChainCalculator
@@ -39,6 +40,14 @@ func (bc *BlockChain) AddBlock(block *Block) {
 	}
 
 	bc.Blocks = append(bc.Blocks, block)
+
+	var newPendingTransactions []*Transaction
+	for _, transaction := range bc.pendingTransactions {
+		if !block.HasTransaction(transaction) {
+			newPendingTransactions = append(newPendingTransactions, transaction)
+		}
+	}
+	bc.pendingTransactions = newPendingTransactions
 }
 
 func (bc *BlockChain) AddTransaction(transaction *Transaction) error {

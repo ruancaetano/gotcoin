@@ -60,10 +60,10 @@ func (eh *EventHandler) handleBlockChainSyncResponse(event EventData) {
 
 	if event.BlockCount != nil && len(eh.BlockChain.Blocks) == *event.BlockCount {
 		eh.BlockChain.SortBlocks()
+		eh.BlockChain.Synced = true
 		log.Println("Block chain sync completed")
 		log.Println("Blocks count: ", len(eh.BlockChain.Blocks))
 		log.Println("Block chain valid: ", eh.BlockChain.IsChainValid())
 		return
 	}
-
 }
