@@ -1,6 +1,7 @@
 package network
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
@@ -13,10 +14,7 @@ import (
 	"github.com/ruancaetano/gotcoin/core"
 )
 
-func SetupGenesisNode(ctx context.Context, node host.Host) {
-	bc := core.NewBlockChain()
-	eh := core.NewEventHandler(bc)
-
+func SetupGenesisNode(ctx context.Context, node host.Host, bc *core.BlockChain, eh *core.EventHandler) {
 	_, err := NewKDHT(ctx, node, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -26,13 +24,9 @@ func SetupGenesisNode(ctx context.Context, node host.Host) {
 	core.SetupInitialBlocks(bc)
 
 	log.Println("listening for connections")
-	select {} // hang forever
 }
 
-func SetupPeerNode(ctx context.Context, node host.Host) {
-	bc := core.NewEmptyBlockChain()
-	eh := core.NewEventHandler(bc)
-
+func SetupPeerNode(ctx context.Context, node host.Host, _ *core.BlockChain, eh *core.EventHandler) (*network.Stream, *bufio.ReadWriter) {
 	node.SetStreamHandler("/p2p/1.0.0", func(s network.Stream) { HandleNewStream(s, eh) })
 
 	addr, err := multiaddr.NewMultiaddr(GenesisNodeAddr)
@@ -46,11 +40,14 @@ func SetupPeerNode(ctx context.Context, node host.Host) {
 	}
 	setupDiscovery(ctx, node, dht, eh)
 
-	_, rw, err := ConnectToNode(ctx, node, addr, eh)
+	s, rw, err := ConnectToNode(ctx, node, addr, eh)
 
-	SendEvent(rw, core.RequestBlockChainSyncEvent())
+	err = SendEvent(rw, core.RequestBlockChainSyncEvent())
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	select {} // hang forever
+	return s, rw
 }
 
 func setupDiscovery(ctx context.Context, node host.Host, dht *dht.IpfsDHT, eh *core.EventHandler) {

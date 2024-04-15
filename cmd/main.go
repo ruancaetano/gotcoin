@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 
+	"github.com/ruancaetano/gotcoin/core"
 	"github.com/ruancaetano/gotcoin/infra"
 	"github.com/ruancaetano/gotcoin/network"
 )
@@ -24,8 +25,15 @@ func main() {
 	}
 
 	if *config.Genesis {
-		network.SetupGenesisNode(ctx, node)
+		bc := core.NewBlockChain()
+		eh := core.NewEventHandler(bc)
+		network.SetupGenesisNode(ctx, node, bc, eh)
 	} else {
-		network.SetupPeerNode(ctx, node)
+		bc := core.NewEmptyBlockChain()
+		eh := core.NewEventHandler(bc)
+		network.SetupPeerNode(ctx, node, bc, eh)
 	}
+
+	// hang forever
+	select {}
 }
