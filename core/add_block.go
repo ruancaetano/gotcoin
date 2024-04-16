@@ -1,6 +1,15 @@
 package core
 
 func (bc *BlockChain) AddBlock(block *Block) {
+	bc.lock.Lock()
+	defer bc.lock.Unlock()
+
+	for _, b := range bc.Blocks {
+		if b.Hash == block.Hash {
+			return
+		}
+	}
+
 	if !block.IsValid() {
 		return
 	}

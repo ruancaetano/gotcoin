@@ -8,6 +8,9 @@ import (
 )
 
 func (bc *BlockChain) InsertNewBlock(newBlock *Block, newDifficulty int) {
+	bc.lock.Lock()
+	defer bc.lock.Unlock()
+
 	lastBlock := bc.GetLastBlock()
 
 	duplicatedBlock := newBlock.PrevHash == lastBlock.PrevHash

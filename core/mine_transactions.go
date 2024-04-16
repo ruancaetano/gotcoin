@@ -9,12 +9,23 @@ func (bc *BlockChain) MinePendingTransactions(mineRewardAddress string) {
 		return
 	}
 	lastBlock := bc.GetLastBlock()
-	block, _ := NewBlock(lastBlock.Index+1, lastBlock.Hash, bc.PendingTransactions)
+
+	transactionsToMine := append(bc.PendingTransactions, NewTransaction("", mineRewardAddress, MineReward))
+	block, _ := NewBlock(lastBlock.Index+1, lastBlock.Hash, transactionsToMine)
 	block.MineBlock(bc.Difficulty)
 	fmt.Println("Block mined: ", block.Hash)
+
+	bc.lock.Lock()
+	defer bc.lock.Unlock()
+
 	bc.Blocks = append(bc.Blocks, block)
 
-	bc.PendingTransactions = []*Transaction{
-		NewTransaction("", mineRewardAddress, MineReward),
+	var newPendingTransactions []*Transaction
+	for _, transaction := range bc.PendingTransactions {
+		if !block.HasTransaction(transaction) {
+			newPendingTransactions = append(newPendingTransactions, transaction)
+		}
 	}
+
+	bc.PendingTransactions = newPendingTransactions
 }

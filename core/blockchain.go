@@ -2,6 +2,7 @@ package core
 
 import (
 	"sort"
+	"sync"
 )
 
 type BlockChain struct {
@@ -9,18 +10,25 @@ type BlockChain struct {
 	PendingTransactions []*Transaction `json:"pendingTransactions"`
 	Blocks              []*Block       `json:"blocks"`
 	Difficulty          int            `json:"difficulty"`
+
+	mining bool
+	lock   sync.Mutex
 }
 
 func NewBlockChain() *BlockChain {
 	bc := &BlockChain{
 		Difficulty: InitialMineDifficulty,
+		lock:       sync.Mutex{},
 	}
 	bc.Blocks = append(bc.Blocks, bc.CreateGenesisBlock())
 	return bc
 }
 
 func NewEmptyBlockChain() *BlockChain {
-	bc := &BlockChain{}
+	bc := &BlockChain{
+		Difficulty: InitialMineDifficulty,
+		lock:       sync.Mutex{},
+	}
 	return bc
 }
 

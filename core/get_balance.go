@@ -17,5 +17,14 @@ func (bc *BlockChain) GetBalance(address string) float64 {
 		}
 	}
 
+	for _, transaction := range bc.PendingTransactions {
+		if transaction.FromAddr == address {
+			balance -= transaction.Amount
+		}
+		if transaction.ToAddr == address {
+			balance += transaction.Amount
+		}
+	}
+
 	return balance
 }
