@@ -72,13 +72,6 @@ func InitHost(genesis bool, listenPort int) (libhost.Host, error) {
 		return nil, err
 	}
 
-	peerInfo := peer.AddrInfo{
-		ID:    host.ID(),
-		Addrs: host.Addrs(),
-	}
-	addrs, err := peer.AddrInfoToP2pAddrs(&peerInfo)
-	log.Printf("Running: %s\n", addrs)
-
 	return host, nil
 }
 

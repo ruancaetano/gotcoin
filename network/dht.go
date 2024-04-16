@@ -42,7 +42,7 @@ func NewKDHT(ctx context.Context, host host.Host, bootstrapPeers []multiaddr.Mul
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := host.Connect(ctx, *peerinfo); err != nil {
+			if err = host.Connect(ctx, *peerinfo); err != nil {
 				log.Printf("Error while connecting to node %q: %-v", peerinfo, err)
 			} else {
 				log.Printf("Connection established with bootstrap node: %q", *peerinfo)
@@ -58,12 +58,12 @@ func Discover(ctx context.Context, discoveryAddrChan chan string, node host.Host
 	var routingDiscovery = routing.NewRoutingDiscovery(dht)
 
 	withTtl := func(options *discovery.Options) error {
-		options.Ttl = time.Second * 30
+		options.Ttl = time.Minute
 		return nil
 	}
 	util.Advertise(ctx, routingDiscovery, rendezvous, withTtl)
 
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(time.Second * 30)
 	defer ticker.Stop()
 
 	for {
@@ -82,12 +82,8 @@ func Discover(ctx context.Context, discoveryAddrChan chan string, node host.Host
 					continue
 				}
 
-				if err = dht.Ping(ctx, p.ID); err != nil {
-					continue
-				}
-
 				if node.Network().Connectedness(p.ID) != network.Connected {
-					fmt.Println("Discovered: ", p.Addrs[0])
+					log.Println("Discovered: ", p.Addrs[0])
 					discoveryAddrChan <- fmt.Sprintf("%s/p2p/%s", p.Addrs[0].String(), p.ID.String())
 				}
 			}
