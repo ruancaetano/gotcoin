@@ -12,6 +12,7 @@ import (
 	libnetwork "github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
+	"go.uber.org/zap"
 
 	"github.com/ruancaetano/gotcoin/core/events"
 	"github.com/ruancaetano/gotcoin/core/protocols"
@@ -28,7 +29,8 @@ type NodeAdapter struct {
 	Host         libhost.Host
 	EventHandler protocols.EventHandler
 	Streams      map[string]libnetwork.Stream
-	eventsCache  *cache.Cache
+	EventsCache  *cache.Cache
+	Logger       *zap.Logger
 }
 
 func NewNodeAdapterAsGenesis(ctx context.Context, host libhost.Host) protocols.Node {
@@ -43,7 +45,8 @@ func NewNodeAdapterAsGenesis(ctx context.Context, host libhost.Host) protocols.N
 		Addr:        host.Addrs()[0].String(),
 		Host:        host,
 		Streams:     map[string]libnetwork.Stream{},
-		eventsCache: cache.New(5*time.Minute, 10*time.Minute),
+		EventsCache: cache.New(5*time.Minute, 10*time.Minute),
+		Logger:      infra.GetLogger("NodeAdapter"),
 	}
 }
 
@@ -66,7 +69,7 @@ func NewNodeAdapter(ctx context.Context, host libhost.Host) protocols.Node {
 		Streams: map[string]libnetwork.Stream{
 			genesisPeerInfo.ID.String(): s,
 		},
-		eventsCache: cache.New(5*time.Minute, 10*time.Minute),
+		EventsCache: cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
@@ -79,8 +82,7 @@ func (n *NodeAdapter) GetAddr() string {
 }
 
 func (n *NodeAdapter) Setup(ctx context.Context, eh protocols.EventHandler) {
-	fmt.Println("NodeID:", n.ID.String())
-	fmt.Println("NodeAddr:", n.Addr)
+	n.Logger.Debug("Running node:", zap.String("ID", n.ID.String()), zap.String("Addr", n.Addr))
 
 	n.EventHandler = eh
 
@@ -134,15 +136,15 @@ func (n *NodeAdapter) ReadEvent(s libnetwork.Stream) {
 		if str != "\n" {
 			eventData := events.EventData{}
 			if err = json.Unmarshal([]byte(str), &eventData); err != nil {
-				log.Println("Failed to unmarshal event data")
+				n.Logger.Error("Failed to unmarshal event data", zap.Error(err))
 				continue
 			}
 
-			if _, found := n.eventsCache.Get(eventData.ID); found {
+			if _, found := n.EventsCache.Get(eventData.ID); found {
 				return
 			}
 
-			n.eventsCache.Set(eventData.ID, struct{}{}, cache.DefaultExpiration)
+			n.EventsCache.Set(eventData.ID, struct{}{}, cache.DefaultExpiration)
 			go n.EventHandler.Handle(eventData)
 			go n.PropagateEvent(eventData)
 		}
@@ -220,7 +222,7 @@ func (n *NodeAdapter) GetPeerStream(peerID string) libnetwork.Stream {
 func (n *NodeAdapter) registerNetworkListeners() {
 	n.Host.Network().Notify(&libnetwork.NotifyBundle{
 		DisconnectedF: func(net libnetwork.Network, c libnetwork.Conn) {
-			fmt.Printf("Peer disconnected: %s\n", c.RemotePeer())
+			n.Logger.Debug("Peer disconnected", zap.String("peer", c.RemotePeer().String()))
 			delete(n.Streams, c.RemotePeer().String())
 		},
 	})
@@ -240,24 +242,21 @@ func (n *NodeAdapter) setupNetworkDiscovery(ctx context.Context) {
 	discoveryAddrChan := make(chan string, 10)
 	go network2.Discover(ctx, discoveryAddrChan, n.Host, kdht, "gotcoin")
 	go func(ctx context.Context, host libhost.Host, discoveryAddrChan chan string) {
-		fmt.Println("listening for discovery addresses")
+		n.Logger.Debug("listening for discovery addresses")
 		for {
 			foundAddr := <-discoveryAddrChan
 
-			fmt.Println("foundAddr:", foundAddr)
-
 			addr, err := multiaddr.NewMultiaddr(foundAddr)
 			if err != nil {
-				log.Fatal("failed to parse multiaddr:", err)
+				continue
 			}
 			peerInfo, err := peer.AddrInfoFromP2pAddr(addr)
 			if err != nil {
-				log.Fatal("failed to parse peer:", err)
+				continue
 			}
 
 			s, err := network2.ConnectHostToAddr(ctx, host, addr)
 			if err != nil {
-				log.Println(err)
 				continue
 			}
 			go n.ReadEvent(s)

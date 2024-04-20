@@ -69,6 +69,7 @@ func handleSelectedOption(choice int) {
 	case 1:
 		transaction := core.NewTransaction(util.Wallet1.PublicKey, util.Wallet2.PublicKey, 1)
 		transaction.Sign(util.Wallet1.PrivateKey)
+		bs.AddTransaction(transaction)
 		node.SendBroadcastEvent(events.SendNewTransactionEvent(transaction))
 
 	case 2:
