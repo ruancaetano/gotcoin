@@ -31,6 +31,11 @@ func NewBlock(index int, prevHash string, transactions []*Transaction) (*Block, 
 	return block, nil
 }
 
+func NewGenesisBlock() *Block {
+	block, _ := NewBlock(0, "", []*Transaction{})
+	return block
+}
+
 func (block *Block) CalculateHash() (string, error) {
 	return CalculateBlockHash(
 		block.Index,

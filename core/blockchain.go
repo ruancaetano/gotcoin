@@ -11,23 +11,23 @@ type BlockChain struct {
 	Blocks              []*Block       `json:"blocks"`
 	Difficulty          int            `json:"difficulty"`
 
-	mining bool
-	lock   sync.Mutex
+	Mining bool
+	Mutex  sync.Mutex
 }
 
 func NewBlockChain() *BlockChain {
 	bc := &BlockChain{
 		Difficulty: InitialMineDifficulty,
-		lock:       sync.Mutex{},
+		Mutex:      sync.Mutex{},
 	}
-	bc.Blocks = append(bc.Blocks, bc.CreateGenesisBlock())
+	bc.Blocks = append(bc.Blocks, NewGenesisBlock())
 	return bc
 }
 
 func NewEmptyBlockChain() *BlockChain {
 	bc := &BlockChain{
 		Difficulty: InitialMineDifficulty,
-		lock:       sync.Mutex{},
+		Mutex:      sync.Mutex{},
 	}
 	return bc
 }
