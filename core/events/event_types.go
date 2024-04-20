@@ -1,29 +1,15 @@
-package core
+package events
 
 import (
 	"github.com/google/uuid"
+
+	"github.com/ruancaetano/gotcoin/core"
 )
 
 const RequestBlockChainSyncEventType = "request_blockchain_sync"
 const ResponseBlockChainSyncEventType = "response_blockchain_sync"
 const NewBlockEventType = "new_block"
 const NewTransactionEventType = "new_transaction"
-
-type EventMetadata struct {
-	OriginPeerID  string `json:"origin_peer_id"`
-	FromPeerID    string `json:"from_peer_id"`
-	MustPropagate bool   `json:"must_propagate"`
-}
-
-type EventData struct {
-	ID           string       `json:"id"`
-	Type         string       `json:"type"`
-	Block        *Block       `json:"block"`
-	BlockCount   *int         `json:"block_count"`
-	NewDifficult *int         `json:"new_difficult"`
-	Transaction  *Transaction `json:"transaction"`
-	Metadata     EventMetadata
-}
 
 func RequestBlockChainSyncEvent() EventData {
 	return EventData{
@@ -32,7 +18,7 @@ func RequestBlockChainSyncEvent() EventData {
 	}
 }
 
-func ResponseBlockChainSyncEvent(block Block, blockCount int) EventData {
+func ResponseBlockChainSyncEvent(block core.Block, blockCount int) EventData {
 	return EventData{
 		ID:         uuid.NewString(),
 		Type:       ResponseBlockChainSyncEventType,
@@ -41,7 +27,7 @@ func ResponseBlockChainSyncEvent(block Block, blockCount int) EventData {
 	}
 }
 
-func SendNewBlockEvent(block *Block, newDifficult *int) EventData {
+func SendNewBlockEvent(block *core.Block, newDifficult *int) EventData {
 	return EventData{
 		ID:           uuid.NewString(),
 		Type:         NewBlockEventType,
@@ -53,7 +39,7 @@ func SendNewBlockEvent(block *Block, newDifficult *int) EventData {
 	}
 }
 
-func SendNewTransactionEvent(transaction *Transaction) EventData {
+func SendNewTransactionEvent(transaction *core.Transaction) EventData {
 	return EventData{
 		ID:          uuid.NewString(),
 		Type:        NewTransactionEventType,
