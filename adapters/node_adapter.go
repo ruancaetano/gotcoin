@@ -16,7 +16,7 @@ import (
 	"github.com/ruancaetano/gotcoin/core/events"
 	"github.com/ruancaetano/gotcoin/core/protocols"
 	"github.com/ruancaetano/gotcoin/infra"
-	"github.com/ruancaetano/gotcoin/network"
+	network2 "github.com/ruancaetano/gotcoin/infra/network"
 
 	"github.com/patrickmn/go-cache"
 )
@@ -32,7 +32,7 @@ type NodeAdapter struct {
 }
 
 func NewNodeAdapterAsGenesis(ctx context.Context, host libhost.Host) protocols.Node {
-	_, err := network.NewKDHT(ctx, host, nil)
+	_, err := network2.NewKDHT(ctx, host, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func NewNodeAdapter(ctx context.Context, host libhost.Host) protocols.Node {
 	}
 	genesisPeerInfo, _ := peer.AddrInfoFromP2pAddr(genesisAddr)
 
-	s, err := network.ConnectHostToAddr(ctx, host, genesisAddr)
+	s, err := network2.ConnectHostToAddr(ctx, host, genesisAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func (n *NodeAdapter) Setup(ctx context.Context, eh protocols.EventHandler) {
 		return
 	}
 
-	genesisPeerID := network.GetGenesisPeerID()
+	genesisPeerID := network2.GetGenesisPeerID()
 	genesisStream := n.Streams[genesisPeerID]
 
 	n.Host.SetStreamHandler("/p2p/1.0.0", n.HandleNewStream)
@@ -110,7 +110,7 @@ func (n *NodeAdapter) HandleNewStream(s libnetwork.Stream) {
 }
 
 func (n *NodeAdapter) InitSync() error {
-	peerID := network.GetGenesisPeerID()
+	peerID := network2.GetGenesisPeerID()
 	s := n.Streams[peerID]
 	if s == nil {
 		return fmt.Errorf("no stream to peer %s", peerID)
@@ -232,13 +232,13 @@ func (n *NodeAdapter) setupNetworkDiscovery(ctx context.Context) {
 		log.Fatal(err)
 	}
 
-	kdht, err := network.NewKDHT(ctx, n.Host, []multiaddr.Multiaddr{genesisAddr})
+	kdht, err := network2.NewKDHT(ctx, n.Host, []multiaddr.Multiaddr{genesisAddr})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	discoveryAddrChan := make(chan string, 10)
-	go network.Discover(ctx, discoveryAddrChan, n.Host, kdht, "gotcoin")
+	go network2.Discover(ctx, discoveryAddrChan, n.Host, kdht, "gotcoin")
 	go func(ctx context.Context, host libhost.Host, discoveryAddrChan chan string) {
 		fmt.Println("listening for discovery addresses")
 		for {
@@ -255,7 +255,7 @@ func (n *NodeAdapter) setupNetworkDiscovery(ctx context.Context) {
 				log.Fatal("failed to parse peer:", err)
 			}
 
-			s, err := network.ConnectHostToAddr(ctx, host, addr)
+			s, err := network2.ConnectHostToAddr(ctx, host, addr)
 			if err != nil {
 				log.Println(err)
 				continue

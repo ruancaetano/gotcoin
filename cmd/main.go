@@ -10,7 +10,7 @@ import (
 	"github.com/ruancaetano/gotcoin/core/blockchainsvc"
 	"github.com/ruancaetano/gotcoin/core/protocols"
 	"github.com/ruancaetano/gotcoin/infra"
-	"github.com/ruancaetano/gotcoin/network"
+	"github.com/ruancaetano/gotcoin/infra/network"
 )
 
 func main() {
