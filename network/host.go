@@ -17,11 +17,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/multiformats/go-multiaddr"
-)
 
-const (
-	GenesisNodeAddr = "/ip4/127.0.0.1/tcp/50000/p2p/QmPHZR5AdqSpKtcSZUCA5AqEni9sKgwPh7R6LxjZCLbXav"
-	GenesisPort     = 50000
+	"github.com/ruancaetano/gotcoin/infra"
 )
 
 func GetGenesisIdentity() (crypto.PrivKey, error) {
@@ -53,7 +50,7 @@ func InitHost(genesis bool, listenPort int) (libhost.Host, error) {
 	var err error
 
 	if genesis {
-		listenPort = GenesisPort
+		listenPort = infra.GenesisPort
 		priv, err = GetGenesisIdentity()
 	} else {
 		priv, _, err = crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
@@ -75,14 +72,14 @@ func InitHost(genesis bool, listenPort int) (libhost.Host, error) {
 	return host, nil
 }
 
-func ConnectToHost(ctx context.Context, node libhost.Host, addr multiaddr.Multiaddr) (network.Stream, error) {
+func ConnectHostToAddr(ctx context.Context, host libhost.Host, addr multiaddr.Multiaddr) (network.Stream, error) {
 	peerInfo, err := peer.AddrInfoFromP2pAddr(addr)
 	if err != nil {
 		return nil, errors.New("failed to parse peer address")
 	}
 
-	node.Peerstore().AddAddrs(peerInfo.ID, peerInfo.Addrs, peerstore.PermanentAddrTTL)
-	s, err := node.NewStream(ctx, peerInfo.ID, "/p2p/1.0.0")
+	host.Peerstore().AddAddrs(peerInfo.ID, peerInfo.Addrs, peerstore.PermanentAddrTTL)
+	s, err := host.NewStream(ctx, peerInfo.ID, "/p2p/1.0.0")
 	if err != nil {
 		log.Println(err)
 		return nil, errors.New("failed to open stream")

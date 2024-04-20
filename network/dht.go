@@ -14,7 +14,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/libp2p/go-libp2p/p2p/discovery/util"
-
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -54,7 +53,7 @@ func NewKDHT(ctx context.Context, host host.Host, bootstrapPeers []multiaddr.Mul
 	return kdht, nil
 }
 
-func Discover(ctx context.Context, discoveryAddrChan chan string, node host.Host, dht *dht.IpfsDHT, rendezvous string) {
+func Discover(ctx context.Context, discoveryAddrChan chan string, host host.Host, dht *dht.IpfsDHT, rendezvous string) {
 	var routingDiscovery = routing.NewRoutingDiscovery(dht)
 
 	withTtl := func(options *discovery.Options) error {
@@ -78,11 +77,11 @@ func Discover(ctx context.Context, discoveryAddrChan chan string, node host.Host
 			}
 
 			for _, p := range peers {
-				if p.ID == node.ID() {
+				if p.ID == host.ID() {
 					continue
 				}
 
-				if node.Network().Connectedness(p.ID) != network.Connected {
+				if host.Network().Connectedness(p.ID) != network.Connected {
 					log.Println("Discovered: ", p.Addrs[0])
 					discoveryAddrChan <- fmt.Sprintf("%s/p2p/%s", p.Addrs[0].String(), p.ID.String())
 				}
