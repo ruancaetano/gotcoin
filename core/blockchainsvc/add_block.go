@@ -1,14 +1,15 @@
 package blockchainsvc
 
 import (
-	"log"
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/ruancaetano/gotcoin/core"
 	"github.com/ruancaetano/gotcoin/util"
 )
 
-func (bs *blockchainServiceImpl) AddBlock(newBlock *core.Block, newDifficulty int) {
+func (bs *blockchainServiceImpl) AddBlock(newBlock *core.Block, newDifficulty int) error {
 	bs.Blockchain.Mutex.Lock()
 	defer bs.Blockchain.Mutex.Unlock()
 
@@ -16,54 +17,52 @@ func (bs *blockchainServiceImpl) AddBlock(newBlock *core.Block, newDifficulty in
 
 	duplicatedBlock := newBlock.PrevHash == lastBlock.PrevHash
 	if duplicatedBlock {
-		log.Println("Block skipped because it is duplicated: ", newBlock.Hash)
-		return
+		bs.Logger.Debug(fmt.Sprintf("block skipped because it is duplicated: %s", newBlock.Hash))
+		return errors.New("block is duplicated")
 	}
 
 	// verify if all transaction in new block are in pending transactions
 	newPendingTransactions := util.CloneSlice(bs.Blockchain.PendingTransactions)
 	for _, transaction := range newBlock.Transactions {
+		// skip reward transaction
+		if transaction.FromAddr == "" {
+			newPendingTransactions = util.RemoveFromSlice(newPendingTransactions, transaction, core.CompareTransactionFunc)
+			continue
+		}
+
 		found := false
 		for _, pendingTransaction := range bs.Blockchain.PendingTransactions {
 			if core.CompareTransactionFunc(pendingTransaction, transaction) {
-				newPendingTransactions = util.RemoveFromSlice(bs.Blockchain.PendingTransactions, pendingTransaction, core.CompareTransactionFunc)
+				newPendingTransactions = util.RemoveFromSlice(newPendingTransactions, pendingTransaction, core.CompareTransactionFunc)
 				found = true
 				break
 			}
 		}
 
 		if !found {
-			log.Println("Block skipped because transaction not found in pending transactions: ", transaction.Signature)
-			return
+			bs.Logger.Debug(fmt.Sprintf("Block skipped because transaction not found in pending transactions: %s", transaction.Signature))
+			return errors.New("transaction not found in pending transactions")
 		}
 	}
 
 	if !bs.isNewValidBlock(newBlock) {
-		log.Println("Block skipped because it is not valid: ", newBlock.Hash)
-		return
+		bs.Logger.Debug(fmt.Sprintf("block skipped because it is not valid: %s", newBlock.Hash))
+		return errors.New("block is not valid")
 	}
 
 	bs.Blockchain.PendingTransactions = newPendingTransactions
 	bs.Blockchain.Blocks = append(bs.Blockchain.Blocks, newBlock)
 	bs.Blockchain.Difficulty = newDifficulty
+	return nil
 }
 
 func (bs *blockchainServiceImpl) isNewValidBlock(newBlock *core.Block) bool {
 	lastBlock := bs.Blockchain.GetLastBlock()
 
-	expectedNewBlockHash := core.CalculateBlockHash(
-		newBlock.Index,
-		newBlock.Timestamp,
-		lastBlock.PrevHash,
-		core.JoinBlockTransactionsSignatures(newBlock),
-		newBlock.Nonce)
-
 	difficultyMatch := strings.Repeat("0", bs.Blockchain.Difficulty)
-	hashMatchesWithDifficulty := strings.HasPrefix(expectedNewBlockHash, difficultyMatch)
-
+	hashMatchesWithDifficulty := strings.HasPrefix(newBlock.Hash, difficultyMatch)
 	validTimestamp := newBlock.Timestamp > lastBlock.Timestamp
 
-	return newBlock.Hash == expectedNewBlockHash &&
-		hashMatchesWithDifficulty &&
+	return hashMatchesWithDifficulty &&
 		validTimestamp
 }

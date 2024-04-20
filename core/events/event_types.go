@@ -18,12 +18,13 @@ func RequestBlockChainSyncEvent() EventData {
 	}
 }
 
-func ResponseBlockChainSyncEvent(block core.Block, blockCount int) EventData {
+func ResponseBlockChainSyncEvent(block core.Block, blockCount int, difficult int) EventData {
 	return EventData{
-		ID:         uuid.NewString(),
-		Type:       ResponseBlockChainSyncEventType,
-		Block:      &block,
-		BlockCount: &blockCount,
+		ID:           uuid.NewString(),
+		Type:         ResponseBlockChainSyncEventType,
+		Block:        &block,
+		BlockCount:   &blockCount,
+		NewDifficult: &difficult,
 	}
 }
 

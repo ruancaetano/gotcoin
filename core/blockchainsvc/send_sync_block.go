@@ -20,7 +20,7 @@ func (bs *blockchainServiceImpl) SendSyncBlocks(targetPeerID string) {
 
 	for _, block := range bs.Blockchain.Blocks {
 		// Send block to peer
-		event := events.ResponseBlockChainSyncEvent(*block, len(bs.Blockchain.Blocks))
+		event := events.ResponseBlockChainSyncEvent(*block, len(bs.Blockchain.Blocks), bs.Blockchain.Difficulty)
 		eventBytes, err := json.Marshal(event)
 		if err != nil {
 			log.Println(err)

@@ -3,21 +3,27 @@ package adapters
 import (
 	"log"
 
+	"go.uber.org/zap"
+
 	"github.com/ruancaetano/gotcoin/core/events"
 	"github.com/ruancaetano/gotcoin/core/protocols"
+	"github.com/ruancaetano/gotcoin/infra"
 )
 
 type EventHandlerAdapter struct {
 	blockchainService protocols.BlockchainService
+	logger            *zap.Logger
 }
 
 func NewEventHandlerAdapter(blockchainService protocols.BlockchainService) protocols.EventHandler {
 	return &EventHandlerAdapter{
 		blockchainService: blockchainService,
+		logger:            infra.GetLogger("EventHandlerAdapter"),
 	}
 }
 
 func (eh *EventHandlerAdapter) Handle(event events.EventData) {
+	eh.logger.Debug("Event received", zap.String("type", event.Type))
 	switch event.Type {
 	case events.RequestBlockChainSyncEventType:
 		eh.handleBlockChainSyncRequest(event)
@@ -48,7 +54,7 @@ func (eh *EventHandlerAdapter) handleBlockChainSyncResponse(event events.EventDa
 		return
 	}
 
-	eh.blockchainService.ReceiveSyncBlock(event.Block, *event.BlockCount)
+	eh.blockchainService.ReceiveSyncBlock(event.Block, *event.BlockCount, *event.NewDifficult)
 }
 
 func (eh *EventHandlerAdapter) handleNewTransaction(event events.EventData) {

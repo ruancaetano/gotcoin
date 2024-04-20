@@ -2,13 +2,14 @@ package blockchainsvc
 
 import (
 	"fmt"
-	"log"
+
+	"go.uber.org/zap"
 
 	"github.com/ruancaetano/gotcoin/core"
 	"github.com/ruancaetano/gotcoin/util"
 )
 
-func (bs *blockchainServiceImpl) ReceiveSyncBlock(block *core.Block, totalBlocksCount int) {
+func (bs *blockchainServiceImpl) ReceiveSyncBlock(block *core.Block, totalBlocksCount int, newDifficulty int) {
 	bs.Blockchain.Mutex.Lock()
 	defer bs.Blockchain.Mutex.Unlock()
 
@@ -19,6 +20,7 @@ func (bs *blockchainServiceImpl) ReceiveSyncBlock(block *core.Block, totalBlocks
 	}
 
 	if !block.IsValid() {
+		bs.Logger.Debug("Block skipped because it is not valid", zap.String("hash", block.Hash))
 		return
 	}
 
@@ -31,24 +33,24 @@ func (bs *blockchainServiceImpl) ReceiveSyncBlock(block *core.Block, totalBlocks
 		}
 	}
 	bs.Blockchain.PendingTransactions = newPendingTransactions
-
+	bs.Blockchain.Difficulty = newDifficulty
 	bs.verifySyncStatus(totalBlocksCount)
 }
 
 func (bs *blockchainServiceImpl) verifySyncStatus(totalBlocksCount int) {
 	if len(bs.Blockchain.Blocks) < totalBlocksCount {
-		log.Println("Sync percent complete: ", float64(len(bs.Blockchain.Blocks))/float64(totalBlocksCount)*100.0)
+		bs.Logger.Debug(fmt.Sprintf("Sync percent complete: %.2f", float64(len(bs.Blockchain.Blocks))/float64(totalBlocksCount)*100.0))
 		return
 	}
 
 	bs.Blockchain.SortBlocks()
 	bs.Blockchain.Synced = true
-	log.Println("Block chain sync completed")
-	log.Println("Blocks count: ", len(bs.Blockchain.Blocks))
-	log.Println("Block chain valid: ", bs.Blockchain.IsChainValid())
-	fmt.Printf("Wallet 1: %.2f\n", bs.GetBalance(util.Wallet1.PublicKey))
-	fmt.Printf("Wallet 2: %.2f\n", bs.GetBalance(util.Wallet2.PublicKey))
-	fmt.Printf("Wallet 3: %.2f\n", bs.GetBalance(util.Wallet3.PublicKey))
-	fmt.Printf("Wallet Miner: %.2f\n", bs.GetBalance(util.Miner1.PublicKey))
+	bs.Logger.Debug("Block chain sync completed")
+	bs.Logger.Debug(fmt.Sprintf("Blocks count: %d", len(bs.Blockchain.Blocks)))
+	bs.Logger.Debug(fmt.Sprintf("Block chain valid: %+v", bs.Blockchain.IsChainValid()))
+	bs.Logger.Debug(fmt.Sprintf("Wallet 1: %.2f", bs.GetBalance(util.Wallet1.PublicKey)))
+	bs.Logger.Debug(fmt.Sprintf("Wallet 2: %.2f", bs.GetBalance(util.Wallet2.PublicKey)))
+	bs.Logger.Debug(fmt.Sprintf("Wallet 3: %.2f", bs.GetBalance(util.Wallet3.PublicKey)))
+	bs.Logger.Debug(fmt.Sprintf("Wallet Miner: %.2f", bs.GetBalance(util.Miner1.PublicKey)))
 	return
 }

@@ -20,6 +20,7 @@ func NewBlock(index int, prevHash string, transactions []*Transaction) (*Block, 
 		Timestamp:    time.Now().Unix(),
 		Transactions: transactions,
 		PrevHash:     prevHash,
+		Nonce:        0,
 	}
 
 	hash, err := block.CalculateHash()

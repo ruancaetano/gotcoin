@@ -1,9 +1,10 @@
 package blockchainsvc
 
 import (
-	"fmt"
+	"time"
 
 	"github.com/ruancaetano/gotcoin/core"
+	"github.com/ruancaetano/gotcoin/core/events"
 )
 
 func (bs *blockchainServiceImpl) MinePendingTransactions(mineRewardAddress string) {
@@ -12,22 +13,27 @@ func (bs *blockchainServiceImpl) MinePendingTransactions(mineRewardAddress strin
 	}
 	lastBlock := bs.Blockchain.GetLastBlock()
 
+	bs.Blockchain.Mining = true
 	transactionsToMine := append(bs.Blockchain.PendingTransactions, core.NewTransaction("", mineRewardAddress, core.MineReward))
 	block, _ := core.NewBlock(lastBlock.Index+1, lastBlock.Hash, transactionsToMine)
+	startTime := time.Now()
 	block.MineBlock(bs.Blockchain.Difficulty)
-	fmt.Println("Block mined: ", block.Hash)
+	endTime := time.Now()
+	bs.Logger.Debug("Block mined: " + block.Hash)
 
-	bs.Blockchain.Mutex.Lock()
-	defer bs.Blockchain.Mutex.Unlock()
-
-	bs.Blockchain.Blocks = append(bs.Blockchain.Blocks, block)
-
-	var newPendingTransactions []*core.Transaction
-	for _, transaction := range bs.Blockchain.PendingTransactions {
-		if !block.HasTransaction(transaction) {
-			newPendingTransactions = append(newPendingTransactions, transaction)
-		}
+	err := bs.AddBlock(block, bs.calculateNewDifficulty(endTime.Sub(startTime)))
+	if err != nil {
+		bs.Logger.Debug("Block not added: " + err.Error())
+		return
 	}
+	bs.Node.SendBroadcastEvent(events.SendNewBlockEvent(block, &bs.Blockchain.Difficulty))
+	bs.Blockchain.Mining = false
+}
 
-	bs.Blockchain.PendingTransactions = newPendingTransactions
+func (bs *blockchainServiceImpl) calculateNewDifficulty(timeToMineBlock time.Duration) int {
+	//if timeToMineBlock < core.ExpectedTimeToMine {
+	//	return bs.Blockchain.Difficulty + 1
+	//}
+	//return bs.Blockchain.Difficulty - 1
+	return core.InitialMineDifficulty
 }
