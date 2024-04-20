@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 
+	"github.com/ruancaetano/gotcoin/adapters"
 	"github.com/ruancaetano/gotcoin/core"
+	"github.com/ruancaetano/gotcoin/core/blockchainsvc"
+	"github.com/ruancaetano/gotcoin/core/protocols"
 	"github.com/ruancaetano/gotcoin/infra"
 	"github.com/ruancaetano/gotcoin/network"
 )
@@ -18,27 +20,32 @@ func main() {
 	flag.IntVar(&config.Port, "port", 0, "")
 	flag.Parse()
 
-	log.Println("Config: ", config)
 	ctx := context.Background()
 	host, err := network.InitHost(*config.Genesis, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var node *network.Node
+	var node protocols.Node
 	if *config.Genesis {
-		bc := core.NewBlockChain()
-		eh := core.NewEventHandler(bc)
+		node = adapters.NewNodeAdapterAsGenesis(ctx, host)
 
-		node = network.NewGenesisNode(ctx, host, bc, eh)
+		bc := core.NewBlockChain()
+		bs := blockchainsvc.NewBlockchainServiceImpl(bc, node)
+		eh := adapters.NewEventHandlerAdapter(bs)
+
+		node.Setup(ctx, eh)
+		bs.SetupInitialBlocks()
 	} else {
+		node = adapters.NewNodeAdapter(ctx, host)
+
 		bc := core.NewEmptyBlockChain()
-		eh := core.NewEventHandler(bc)
-		node = network.NewNode(ctx, host, bc, eh)
+		bs := blockchainsvc.NewBlockchainServiceImpl(bc, node)
+		eh := adapters.NewEventHandlerAdapter(bs)
+
+		node.Setup(ctx, eh)
 	}
 
-	fmt.Println("Node ID: ", node.ID)
-	fmt.Println("Node Addr: ", node.Addr)
 	// hang forever
 	select {}
 }

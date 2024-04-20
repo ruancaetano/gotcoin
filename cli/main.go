@@ -9,14 +9,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ruancaetano/gotcoin/adapters"
 	"github.com/ruancaetano/gotcoin/core"
+	"github.com/ruancaetano/gotcoin/core/blockchainsvc"
+	"github.com/ruancaetano/gotcoin/core/events"
+	"github.com/ruancaetano/gotcoin/core/protocols"
 	"github.com/ruancaetano/gotcoin/network"
+	"github.com/ruancaetano/gotcoin/util"
 )
 
 var bc *core.BlockChain
-var node *network.Node
-var wallet = core.Wallet1
-var walletTwo = core.Wallet2
+var bs protocols.BlockchainService
+var node protocols.Node
 
 var cliOptions = []string{"Create transaction", "Get Balance"}
 
@@ -27,14 +31,12 @@ func main() {
 		panic(err)
 	}
 
+	node = adapters.NewNodeAdapter(ctx, host)
+
 	bc = core.NewEmptyBlockChain()
-	eh := core.NewEventHandler(bc)
-
-	node = network.NewNode(ctx, host, bc, eh)
-	for !bc.Synced {
-	}
-
-	fmt.Println("Blockchain synced")
+	bs = blockchainsvc.NewBlockchainServiceImpl(bc, node)
+	eh := adapters.NewEventHandlerAdapter(bs)
+	node.Setup(ctx, eh)
 
 	time.Sleep(1 * time.Second)
 	runCli()
@@ -65,12 +67,12 @@ func handleSelectedOption(choice int) {
 	fmt.Printf("You selected: %s\n", cliOptions[choice-1])
 	switch choice {
 	case 1:
-		transaction := core.NewTransaction(wallet.PublicKey, walletTwo.PublicKey, 1)
-		transaction.Sign(wallet.PrivateKey)
-		node.SendBroadcastEvent(core.SendNewTransactionEvent(transaction))
+		transaction := core.NewTransaction(util.Wallet1.PublicKey, util.Wallet2.PublicKey, 1)
+		transaction.Sign(util.Wallet1.PrivateKey)
+		node.SendBroadcastEvent(events.SendNewTransactionEvent(transaction))
 
 	case 2:
-		fmt.Println("Balance 1: ", bc.GetBalance(wallet.PublicKey))
-		fmt.Println("Balance 2: ", bc.GetBalance(walletTwo.PublicKey))
+		fmt.Println("Balance 1: ", bs.GetBalance(util.Wallet1.PublicKey))
+		fmt.Println("Balance 2: ", bs.GetBalance(util.Wallet2.PublicKey))
 	}
 }
